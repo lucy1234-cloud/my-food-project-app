@@ -18,6 +18,9 @@ class FoodViewModel(private val repository: FoodRepository = FoodRepository()) :
     private val _errorMessage = MutableStateFlow<String?>(null)
     val errorMessage: StateFlow<String?> = _errorMessage
 
+    // NEW: Callback to trigger refresh in HomeViewModel
+    var onPostSuccess: (() -> Unit)? = null
+
     fun postFood(title: String, location: String, description: String) {
         viewModelScope.launch {
             _isUploading.value = true
@@ -27,6 +30,7 @@ class FoodViewModel(private val repository: FoodRepository = FoodRepository()) :
 
             result.onSuccess {
                 _uploadSuccess.value = true
+                onPostSuccess?.invoke()  // ← TRIGGER REFRESH
             }.onFailure { error ->
                 _uploadSuccess.value = false
                 _errorMessage.value = error.message ?: "Failed to post"

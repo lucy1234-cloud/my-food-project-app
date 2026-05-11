@@ -38,8 +38,14 @@ fun FoodForm(
     LaunchedEffect(uploadSuccess, errorMessage) {
         when {
             uploadSuccess == true -> {
-                Toast.makeText(context, "Posted successfully!", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, "Food posted successfully!", Toast.LENGTH_SHORT).show()
                 viewModel.resetUploadState()
+
+                // NEW: Set refresh flag for previous screen
+                navController.previousBackStackEntry
+                    ?.savedStateHandle
+                    ?.set("refresh_posts", true)
+
                 navController.popBackStack()
             }
             uploadSuccess == false && errorMessage != null -> {
@@ -55,7 +61,7 @@ fun FoodForm(
                 title = { Text("Post Available Food") },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 }
             )
@@ -65,10 +71,12 @@ fun FoodForm(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .padding(24.dp)
+                .padding(horizontal = 24.dp)
                 .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            Spacer(modifier = Modifier.height(16.dp))
+
             Icon(
                 imageVector = Icons.Default.Restaurant,
                 contentDescription = null,
@@ -78,8 +86,18 @@ fun FoodForm(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            Text("What are you sharing?", fontSize = 24.sp, fontWeight = FontWeight.Bold)
-            Text("Provide details so others can find it", fontSize = 14.sp)
+            Text(
+                text = "What are you sharing?",
+                fontSize = 24.sp,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+
+            Text(
+                text = "Provide details so others can find it",
+                fontSize = 14.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
 
             Spacer(modifier = Modifier.height(32.dp))
 
@@ -87,10 +105,12 @@ fun FoodForm(
                 value = title,
                 onValueChange = { title = it },
                 label = { Text("Food Title *") },
-                placeholder = { Text("e.g. Fresh Bananas") },
-                leadingIcon = { Icon(Icons.Default.Restaurant, null) },
+                placeholder = { Text("e.g. Fresh Bananas, Unopened Milk") },
+                leadingIcon = { Icon(Icons.Default.Restaurant, contentDescription = null) },
                 modifier = Modifier.fillMaxWidth(),
-                enabled = !isUploading
+                shape = MaterialTheme.shapes.medium,
+                enabled = !isUploading,
+                singleLine = true
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -99,10 +119,12 @@ fun FoodForm(
                 value = location,
                 onValueChange = { location = it },
                 label = { Text("Pickup Location *") },
-                placeholder = { Text("e.g. Westlands") },
-                leadingIcon = { Icon(Icons.Default.LocationOn, null) },
+                placeholder = { Text("e.g. Westlands, Near the Post Office") },
+                leadingIcon = { Icon(Icons.Default.LocationOn, contentDescription = null) },
                 modifier = Modifier.fillMaxWidth(),
-                enabled = !isUploading
+                shape = MaterialTheme.shapes.medium,
+                enabled = !isUploading,
+                singleLine = true
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -111,39 +133,73 @@ fun FoodForm(
                 value = description,
                 onValueChange = { description = it },
                 label = { Text("Description *") },
-                placeholder = { Text("Tell us more about the food...") },
-                leadingIcon = { Icon(Icons.Default.Description, null) },
+                placeholder = { Text("Tell us more about the food, expiry date, etc.") },
+                leadingIcon = { Icon(Icons.Default.Description, contentDescription = null) },
                 modifier = Modifier.fillMaxWidth(),
                 minLines = 3,
                 maxLines = 5,
+                shape = MaterialTheme.shapes.medium,
                 enabled = !isUploading
             )
 
-            Spacer(modifier = Modifier.height(48.dp))
+            Spacer(modifier = Modifier.height(32.dp))
+
+            errorMessage?.let { error ->
+                if (uploadSuccess == false) {
+                    Text(
+                        text = error,
+                        color = MaterialTheme.colorScheme.error,
+                        fontSize = 14.sp,
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
 
             Button(
                 onClick = {
+                    val trimmedTitle = title.trim()
+                    val trimmedLocation = location.trim()
+                    val trimmedDescription = description.trim()
+
                     when {
-                        title.isBlank() -> Toast.makeText(context, "Title required", Toast.LENGTH_SHORT).show()
-                        location.isBlank() -> Toast.makeText(context, "Location required", Toast.LENGTH_SHORT).show()
-                        description.isBlank() -> Toast.makeText(context, "Description required", Toast.LENGTH_SHORT).show()
-                        else -> viewModel.postFood(title, location, description)
+                        trimmedTitle.isBlank() -> {
+                            Toast.makeText(context, "Food title is required", Toast.LENGTH_SHORT).show()
+                        }
+                        trimmedLocation.isBlank() -> {
+                            Toast.makeText(context, "Pickup location is required", Toast.LENGTH_SHORT).show()
+                        }
+                        trimmedDescription.isBlank() -> {
+                            Toast.makeText(context, "Description is required", Toast.LENGTH_SHORT).show()
+                        }
+                        else -> {
+                            viewModel.postFood(trimmedTitle, trimmedLocation, trimmedDescription)
+                        }
                     }
                 },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
+                shape = MaterialTheme.shapes.medium,
                 enabled = !isUploading
             ) {
                 if (isUploading) {
                     CircularProgressIndicator(
                         color = MaterialTheme.colorScheme.onPrimary,
-                        modifier = Modifier.size(24.dp)
+                        modifier = Modifier.size(24.dp),
+                        strokeWidth = 2.dp
                     )
                 } else {
-                    Text("Post Food Now", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                    Text(
+                        text = "Post Food Now",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold
+                    )
                 }
             }
+
+            Spacer(modifier = Modifier.height(24.dp))
         }
     }
 }

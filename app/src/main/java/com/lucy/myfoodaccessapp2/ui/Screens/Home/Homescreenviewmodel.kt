@@ -1,5 +1,6 @@
 package com.lucy.myfoodaccessapp2.ui.Screens.Home
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.lucy.myfoodaccessapp2.Data.Models.FoodPost
@@ -23,7 +24,9 @@ class HomeViewModel(private val repository: FoodRepository = FoodRepository()) :
     fun fetchPosts() {
         viewModelScope.launch {
             _isLoading.value = true
-            _foodPosts.value = repository.fetchFoodPosts()
+            val posts = repository.fetchFoodPosts()
+            Log.d("HomeVM", "Fetched ${posts.size} posts from repository")
+            _foodPosts.value = posts
             _isLoading.value = false
         }
     }

@@ -5,12 +5,12 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class FoodPost(
-    val id: Int? = null,
+    val id: String? = null,           // ← FIXED: was Int?, now String? (UUID)
     val title: String,
     val location: String,
-    val description: String,
+    val description: String? = null,  // ← FIXED: was String, now String? (nullable in DB)
     @SerialName("created_at")
-    val createdAt: String? = null,
+    val createdAt: String,            // ← FIXED: was String?, now String (NOT NULL in DB)
     @SerialName("user_id")
-    val userId: String? = null
+    val userId: String                // ← FIXED: was String?, now String (NOT NULL in DB)
 )
