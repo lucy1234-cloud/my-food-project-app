@@ -6,13 +6,9 @@ import io.github.jan.supabase.auth.Auth
 import io.github.jan.supabase.postgrest.Postgrest
 
 object SupabaseClient {
-    // Replace these with your actual Supabase URL and Anon Key from your project settings
-    private const val SUPABASE_URL = "https://hdzqeescqntlspzdogmq.supabase.co"
-    private const val SUPABASE_KEY = "sb_publishable_S6FVCheXB0j6Pzxn2kDd-w_EPDh1fVe"
-
     val client: SupabaseClient = createSupabaseClient(
-        supabaseUrl = SUPABASE_URL,
-        supabaseKey = SUPABASE_KEY
+        supabaseUrl = "https://hdzqeescqntlspzdogmq.supabase.co",
+        supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhkenFlZXNjcW50bHNwemRvZ21xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgxNTc2NTIsImV4cCI6MjA5MzczMzY1Mn0.IKCu0eizBQHARoziGSFv3_jkts2mRwv-i2HwdoV_n3A"
     ) {
         install(Auth)
         install(Postgrest)
