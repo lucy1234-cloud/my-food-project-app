@@ -29,19 +29,23 @@ fun FoodForm(
     var title by remember { mutableStateOf("") }
     var location by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
-    
+
     val isUploading by viewModel.isUploading.collectAsState()
     val uploadSuccess by viewModel.uploadSuccess.collectAsState()
+    val errorMessage by viewModel.errorMessage.collectAsState()
     val context = LocalContext.current
 
-    LaunchedEffect(uploadSuccess) {
-        if (uploadSuccess == true) {
-            Toast.makeText(context, "Food posted successfully!", Toast.LENGTH_SHORT).show()
-            viewModel.resetUploadState()
-            navController.popBackStack()
-        } else if (uploadSuccess == false) {
-            Toast.makeText(context, "Failed to post food. Try again.", Toast.LENGTH_SHORT).show()
-            viewModel.resetUploadState()
+    LaunchedEffect(uploadSuccess, errorMessage) {
+        when {
+            uploadSuccess == true -> {
+                Toast.makeText(context, "Posted successfully!", Toast.LENGTH_SHORT).show()
+                viewModel.resetUploadState()
+                navController.popBackStack()
+            }
+            uploadSuccess == false && errorMessage != null -> {
+                Toast.makeText(context, errorMessage, Toast.LENGTH_LONG).show()
+                viewModel.resetUploadState()
+            }
         }
     }
 
@@ -51,7 +55,7 @@ fun FoodForm(
                 title = { Text("Post Available Food") },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")
                     }
                 }
             )
@@ -71,32 +75,21 @@ fun FoodForm(
                 modifier = Modifier.size(64.dp),
                 tint = MaterialTheme.colorScheme.primary
             )
-            
+
             Spacer(modifier = Modifier.height(16.dp))
-            
-            Text(
-                text = "What are you sharing?",
-                fontSize = 24.sp,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-            
-            Text(
-                text = "Provide details so others can find it",
-                fontSize = 14.sp,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+
+            Text("What are you sharing?", fontSize = 24.sp, fontWeight = FontWeight.Bold)
+            Text("Provide details so others can find it", fontSize = 14.sp)
 
             Spacer(modifier = Modifier.height(32.dp))
 
             OutlinedTextField(
                 value = title,
                 onValueChange = { title = it },
-                label = { Text("Food Title") },
-                placeholder = { Text("e.g. Fresh Bananas, Unopened Milk") },
-                leadingIcon = { Icon(Icons.Default.Restaurant, contentDescription = null) },
+                label = { Text("Food Title *") },
+                placeholder = { Text("e.g. Fresh Bananas") },
+                leadingIcon = { Icon(Icons.Default.Restaurant, null) },
                 modifier = Modifier.fillMaxWidth(),
-                shape = MaterialTheme.shapes.medium,
                 enabled = !isUploading
             )
 
@@ -105,11 +98,10 @@ fun FoodForm(
             OutlinedTextField(
                 value = location,
                 onValueChange = { location = it },
-                label = { Text("Pickup Location") },
-                placeholder = { Text("e.g. Westlands, Near the Post Office") },
-                leadingIcon = { Icon(Icons.Default.LocationOn, contentDescription = null) },
+                label = { Text("Pickup Location *") },
+                placeholder = { Text("e.g. Westlands") },
+                leadingIcon = { Icon(Icons.Default.LocationOn, null) },
                 modifier = Modifier.fillMaxWidth(),
-                shape = MaterialTheme.shapes.medium,
                 enabled = !isUploading
             )
 
@@ -118,13 +110,12 @@ fun FoodForm(
             OutlinedTextField(
                 value = description,
                 onValueChange = { description = it },
-                label = { Text("Description") },
-                placeholder = { Text("Tell us more about the food, expiry date, etc.") },
-                leadingIcon = { Icon(Icons.Default.Description, contentDescription = null) },
+                label = { Text("Description *") },
+                placeholder = { Text("Tell us more about the food...") },
+                leadingIcon = { Icon(Icons.Default.Description, null) },
                 modifier = Modifier.fillMaxWidth(),
                 minLines = 3,
                 maxLines = 5,
-                shape = MaterialTheme.shapes.medium,
                 enabled = !isUploading
             )
 
@@ -132,20 +123,23 @@ fun FoodForm(
 
             Button(
                 onClick = {
-                    if (title.isNotBlank() && location.isNotBlank()) {
-                        viewModel.postFood(title, location, description)
-                    } else {
-                        Toast.makeText(context, "Please fill in title and location", Toast.LENGTH_SHORT).show()
+                    when {
+                        title.isBlank() -> Toast.makeText(context, "Title required", Toast.LENGTH_SHORT).show()
+                        location.isBlank() -> Toast.makeText(context, "Location required", Toast.LENGTH_SHORT).show()
+                        description.isBlank() -> Toast.makeText(context, "Description required", Toast.LENGTH_SHORT).show()
+                        else -> viewModel.postFood(title, location, description)
                     }
                 },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
-                shape = MaterialTheme.shapes.medium,
                 enabled = !isUploading
             ) {
                 if (isUploading) {
-                    CircularProgressIndicator(color = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(24.dp))
+                    CircularProgressIndicator(
+                        color = MaterialTheme.colorScheme.onPrimary,
+                        modifier = Modifier.size(24.dp)
+                    )
                 } else {
                     Text("Post Food Now", fontSize = 18.sp, fontWeight = FontWeight.Bold)
                 }

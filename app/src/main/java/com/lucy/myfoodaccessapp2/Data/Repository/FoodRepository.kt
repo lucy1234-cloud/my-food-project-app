@@ -1,5 +1,6 @@
 package com.lucy.myfoodaccessapp2.Data.Repository
 
+import android.util.Log
 import com.lucy.myfoodaccessapp2.Data.Models.FoodPost
 import com.lucy.myfoodaccessapp2.Data.Remote.SupabaseClient
 import io.github.jan.supabase.auth.auth
@@ -16,27 +17,36 @@ class FoodRepository {
                     .select()
                     .decodeList<FoodPost>()
             } catch (e: Exception) {
-                e.printStackTrace()
+                Log.e("FoodRepo", "Fetch failed: ${e.message}")
                 emptyList()
             }
         }
     }
 
-    suspend fun uploadFoodPost(title: String, location: String, description: String): Boolean {
+    suspend fun uploadFoodPost(title: String, location: String, description: String): Result<Unit> {
         return withContext(Dispatchers.IO) {
             try {
                 val user = SupabaseClient.client.auth.currentUserOrNull()
+
+                if (user == null) {
+                    return@withContext Result.failure(
+                        Exception("Not logged in. Please sign in first.")
+                    )
+                }
+
                 val post = FoodPost(
-                    title = title,
-                    location = location,
-                    description = description,
-                    user_id = user?.id // Associate the post with the logged-in user
+                    title = title.trim(),
+                    location = location.trim(),
+                    description = description.trim(),
+                    userId = user.id
                 )
+
                 SupabaseClient.client.postgrest["food_posts"].insert(post)
-                true
+                Result.success(Unit)
+
             } catch (e: Exception) {
-                e.printStackTrace()
-                false
+                Log.e("FoodRepo", "Insert failed: ${e.message}")
+                Result.failure(Exception(e.message ?: "Unknown error"))
             }
         }
     }

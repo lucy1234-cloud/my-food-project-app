@@ -15,16 +15,29 @@ class FoodViewModel(private val repository: FoodRepository = FoodRepository()) :
     private val _uploadSuccess = MutableStateFlow<Boolean?>(null)
     val uploadSuccess: StateFlow<Boolean?> = _uploadSuccess
 
+    private val _errorMessage = MutableStateFlow<String?>(null)
+    val errorMessage: StateFlow<String?> = _errorMessage
+
     fun postFood(title: String, location: String, description: String) {
         viewModelScope.launch {
             _isUploading.value = true
-            val success = repository.uploadFoodPost(title, location, description)
-            _uploadSuccess.value = success
+            _errorMessage.value = null
+
+            val result = repository.uploadFoodPost(title, location, description)
+
+            result.onSuccess {
+                _uploadSuccess.value = true
+            }.onFailure { error ->
+                _uploadSuccess.value = false
+                _errorMessage.value = error.message ?: "Failed to post"
+            }
+
             _isUploading.value = false
         }
     }
-    
+
     fun resetUploadState() {
         _uploadSuccess.value = null
+        _errorMessage.value = null
     }
 }
